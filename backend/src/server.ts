@@ -5,11 +5,21 @@ import type { Response, Request } from "express";
 import { generateRedisKey } from "./utils/generate-redis-key.js";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import cors from "cors";
 
 const app = express();
+app.use(cors({
+  origin: "http://localhost:3000",
+}))
+
 const server = createServer(app);
 const redis = Redis.fromEnv();
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 
 app.get("/", (req: Request, res: Response) => {
   res.json({
@@ -47,7 +57,9 @@ app.get("/photos", async (req: Request, res: Response) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  socket.on("Chat message", (message: string) => {
+    io.emit("Chat message", message);
+  })
 });
 
 server.listen(config.port, () => {
