@@ -13,7 +13,7 @@ const rooms: Rooms = {};
 const DEFAULT_ROOMS = ["General", "Tech-Talk", "Economists", "Politics"];
 
 for (const name of DEFAULT_ROOMS) {
-  rooms[name] = { users: {} };
+  rooms[name.toLowerCase()] = { users: {} };
 }
 
 export const joinRoom = (

@@ -10,6 +10,7 @@ import {
   getUserNameBySocketId,
   getUsersInARoom,
   joinRoom,
+  leaveRoom,
 } from "./roomManager.js";
 
 const app = express();
@@ -37,7 +38,7 @@ io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   socket.on("user:join", (data: { username: string; room: string }) => {
-    joinRoom(data.username, socket.id, data.room);
+    joinRoom(data.username, socket.id, data.room.toLowerCase());
 
     socket.join(data.room);
 
@@ -56,27 +57,45 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("message:send", (data: {room: string, text: string}) => {
+  socket.on("message:send", (data: { room: string; text: string }) => {
     if (!data.text || data.text === "" || data.text.trim() === "") return;
     io.to(data.room).emit("message:received", {
-        text: data.text.trim(),
-        username: socket.data.username || getUserNameBySocketId(socket.id, data.room),
-        timestamp: new Date().toISOString(),
-        id: `${Date.now()}-${socket.id}`,
-    })
-  })
+      text: data.text.trim(),
+      username:
+        socket.data.username || getUserNameBySocketId(socket.id, data.room),
+      timestamp: new Date().toISOString(),
+      id: `${Date.now()}-${socket.id}`,
+    });
+  });
 
   socket.on("typing:start", (data: { room: string }) => {
-    socket.emit("typing:update", {
+    socket.to(data.room).emit("typing:update", {
       username: getUserNameBySocketId(socket.id, data.room),
       isTyping: true,
     });
   });
 
   socket.on("typing:stop", (data: { room: string }) => {
-    socket.emit("typing:update", {
+    socket.to(data.room).emit("typing:update", {
       username: getUserNameBySocketId(socket.id, data.room),
       isTyping: false,
+    });
+  });
+
+  socket.on("room:switch", (data: { from: string; to: string }) => {
+    console.log(data);
+    
+    const username =
+      socket.data.username || getUserNameBySocketId(socket.id, data.from);
+    leaveRoom(socket.id, data.from);
+    socket.to(data.from).emit("room:user_left", {
+      username,
+      users: getUsersInARoom(data.from),
+    });
+    joinRoom(username, socket.id, data.to);
+    socket.to(data.from).emit("room:user_joined", {
+      username,
+      users: getUsersInARoom(data.from),
     });
   });
 });
