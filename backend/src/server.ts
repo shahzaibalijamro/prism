@@ -1,16 +1,27 @@
 import express from "express";
 import config from "./config/config.js";
+import type {
+  Request,
+  Response,
+  NextFunction,
+  ErrorRequestHandler,
+} from "express";
 import { Redis } from "@upstash/redis";
-import type { Response, Request } from "express";
 import { generateRedisKey } from "./utils/generate-redis-key.js";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import cors from "cors";
+import helmet from "helmet";
+import logger from "./config/logger.js";
+import { errorHandler } from "./utils/errorhandler.js";
 
 const app = express();
-app.use(cors({
-  origin: "http://localhost:3000",
-}))
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
+app.use(helmet());
 
 const server = createServer(app);
 const redis = Redis.fromEnv();
@@ -21,8 +32,13 @@ const io = new Server(server, {
   },
 });
 
+app.use((req, res, next) => {
+  logger.http(`${req.method} ${req.url}`);
+  next();
+});
+
 app.get("/", (req: Request, res: Response) => {
-  res.json({
+  return res.json({
     message: "Hello world!",
   });
 });
@@ -36,7 +52,7 @@ app.get("/photos", async (req: Request, res: Response) => {
     // if it's found send the cache
     if (cached) {
       console.log("Cache hit");
-      return res.status(200).json(JSON.parse(cached));
+      return res.status(200).json(cached);
     }
 
     // otherwise make the api request
@@ -44,23 +60,25 @@ app.get("/photos", async (req: Request, res: Response) => {
     const photos = await request.json();
 
     // set it in redis
-    await redis.set(key, JSON.stringify(photos));
+    await redis.set(key, photos);
 
-    // send it back
-    res.status(200).json(photos);
+    return res.status(200).json(photos);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
+    logger.error(error);
+    return res.status(500).json({
       message: "Something went wrong!",
     });
   }
 });
 
-io.on('connection', (socket) => {
-  socket.on("Chat message", (message: string) => {
-    io.emit("Chat message", message);
-  })
+io.on("connection", (socket) => {
+  socket.on("message", (message: string) => {
+    logger.info("Message from frontend: "+ message)
+  });
 });
+
+// Error handling middleware
+app.use(errorHandler);
 
 server.listen(config.port, () => {
   console.log("Server is running!");

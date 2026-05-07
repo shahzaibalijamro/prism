@@ -1,0 +1,9 @@
+2026-05-07T09:58:53.656Z [http]: GET /photos
+2026-05-07T09:58:55.494Z [http]: GET /favicon.ico
+2026-05-07T10:01:41.852Z [http]: GET /photos
+2026-05-07T10:01:43.548Z [error]: Unexpected token 'o', "[object Obj"... is not valid JSON
+2026-05-07T10:01:45.188Z [http]: GET /favicon.ico
+2026-05-07T10:02:40.805Z [http]: GET /photos
+2026-05-07T10:02:42.291Z [http]: GET /favicon.ico
+2026-05-07T10:07:41.398Z [info]: Message from frontend
+2026-05-07T10:08:19.310Z [info]: Message from frontend sdg
