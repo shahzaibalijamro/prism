@@ -1,19 +1,18 @@
 import express from "express";
-import config from "./config/config.js";
+import config, { redis } from "./config/config.js";
 import type {
   Request,
   Response,
-  NextFunction,
-  ErrorRequestHandler,
 } from "express";
-import { Redis } from "@upstash/redis";
 import { generateRedisKey } from "./utils/generate-redis-key.js";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import cors from "cors";
 import helmet from "helmet";
 import logger from "./config/logger.js";
-import { errorHandler } from "./utils/errorhandler.js";
+import { errorHandler } from "./utils/error-handler.js";
+import { connectDB } from "./config/db.js";
+import { simpleAgent } from "./controllers/agent.js";
 
 const app = express();
 app.use(
@@ -22,9 +21,10 @@ app.use(
   }),
 );
 app.use(helmet());
+app.use(express.json())
 
 const server = createServer(app);
-const redis = Redis.fromEnv();
+
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -71,9 +71,11 @@ app.get("/photos", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/agent", simpleAgent)
+
 io.on("connection", (socket) => {
   socket.on("message", (message: string) => {
-    logger.info("Message from frontend: "+ message)
+    logger.info("Message from frontend: " + message);
   });
 });
 
@@ -82,4 +84,5 @@ app.use(errorHandler);
 
 server.listen(config.port, () => {
   console.log("Server is running!");
+  connectDB().then(() => console.log("MongoDB connected"));
 });
