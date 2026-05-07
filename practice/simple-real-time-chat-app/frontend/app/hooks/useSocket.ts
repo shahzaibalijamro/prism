@@ -36,6 +36,7 @@ export interface UseSocketReturn {
   messages: Message[];
   roomUsers: string[];
   typingUsers: string[];
+  currentRoom: string;
   joinRoom: (username: string, room: string) => void;
   sendMessage: (room: string, text: string) => void;
   switchRoom: (from: string, to: string) => void;
@@ -51,6 +52,8 @@ export function useSocket(): UseSocketReturn {
   const [roomUsers, setRoomUsers] = useState<string[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [hasJoined, setHasJoined] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState<string>("");
+  const [socketId, setSocketId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const socket = io(serverURL, {
@@ -62,12 +65,15 @@ export function useSocket(): UseSocketReturn {
     socket.on("connect", () => {
       console.log("Connected to server. Socket ID:", socket.id);
       setIsConnected(true);
+      setSocketId(socket.id);
     });
 
     socket.on("disconnect", (reason: string) => {
       console.log("Disconnected:", reason);
       setIsConnected(false);
       setHasJoined(false);
+      setCurrentRoom("");
+      setSocketId(undefined);
     });
 
     socket.on("connect_error", (error: Error) => {
@@ -76,6 +82,7 @@ export function useSocket(): UseSocketReturn {
     });
 
     socket.on("user:join_confirmed", ({ room, users }: JoinConfirmed) => {
+      setCurrentRoom(room);
       setRoomUsers(users);
       setHasJoined(true);
       setMessages([]);
@@ -136,7 +143,7 @@ export function useSocket(): UseSocketReturn {
 
   const switchRoom = useCallback((from: string, to: string) => {
     if (!socketRef.current) return;
-    socketRef.current.emit("room:switch", { from, to });
+    socketRef.current.emit("room:switch", { from, to, id: socketRef.current?.id });
     setMessages([]);
   }, []);
 
@@ -164,11 +171,12 @@ export function useSocket(): UseSocketReturn {
     messages,
     roomUsers,
     typingUsers,
+    currentRoom,
     joinRoom,
     sendMessage,
     switchRoom,
     startTyping,
     stopTyping,
-    socketId: socketRef.current?.id,
+    socketId,
   };
 }

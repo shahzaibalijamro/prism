@@ -10,7 +10,7 @@ interface Rooms {
 
 const rooms: Rooms = {};
 
-const DEFAULT_ROOMS = ["General", "Tech-Talk", "Economists", "Politics"];
+const DEFAULT_ROOMS = ["General", "Tech-Talk", "Economists", "Politics", "Environment"];
 
 for (const name of DEFAULT_ROOMS) {
   rooms[name.toLowerCase()] = { users: {} };

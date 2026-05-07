@@ -11,6 +11,7 @@ import {
   getUsersInARoom,
   joinRoom,
   leaveRoom,
+  removeFromAllRooms,
 } from "./roomManager.js";
 
 const app = express();
@@ -37,6 +38,14 @@ app.get("/rooms", (req: Request, res: Response) => {
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  socket.onAny((eventName, ...args) => {
+    console.log(eventName, args);
+  });
+
+  socket.onAnyOutgoing((event, ...args) => {
+    console.log("Sending:", event, args);
+  });
+
   socket.on("user:join", (data: { username: string; room: string }) => {
     joinRoom(data.username, socket.id, data.room.toLowerCase());
 
@@ -49,6 +58,7 @@ io.on("connection", (socket) => {
     socket.to(data.room).emit("room:user_joined", {
       username: data.username,
       users,
+      room: data.room,
     });
 
     socket.emit("user:join_confirmed", {
@@ -83,19 +93,35 @@ io.on("connection", (socket) => {
   });
 
   socket.on("room:switch", (data: { from: string; to: string }) => {
-    console.log(data);
-    
     const username =
       socket.data.username || getUserNameBySocketId(socket.id, data.from);
     leaveRoom(socket.id, data.from);
+    socket.leave(data.from);
     socket.to(data.from).emit("room:user_left", {
       username,
       users: getUsersInARoom(data.from),
     });
-    joinRoom(username, socket.id, data.to);
-    socket.to(data.from).emit("room:user_joined", {
+    joinRoom(username, socket.id, data.to.toLowerCase());
+    socket.join(data.to);
+    socket.to(data.to).emit("room:user_joined", {
       username,
-      users: getUsersInARoom(data.from),
+      users: getUsersInARoom(data.to),
+      room: data.to,
+    });
+    socket.emit("user:join_confirmed", {
+      users: getUsersInARoom(data.to),
+      room: data.to,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    removeFromAllRooms(socket.id);
+    const room = socket.data.room;
+    socket.leave(room);
+    socket.to(room).emit("room:user_left", {
+      username:
+        socket.data.username || getUserNameBySocketId(socket.id, room),
+      users: getUsersInARoom(room),
     });
   });
 });
