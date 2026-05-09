@@ -43,6 +43,8 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+
+//just for testing
 app.get("/photos", async (req: Request, res: Response) => {
   const key = generateRedisKey(req);
   try {

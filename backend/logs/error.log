@@ -1,1 +1,5 @@
 2026-05-07T10:01:43.548Z [error]: Unexpected token 'o', "[object Obj"... is not valid JSON
+2026-05-09T12:08:53.010Z [error]: Failed to update conversation summary: {"error":{"code":404,"message":"models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-05-09T12:08:53.011Z [error]: Delayed summary update failed {"error":{"code":404,"message":"models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-05-09T12:26:15.752Z [error]: Expected double-quoted property name in JSON at position 208
+2026-05-09T15:05:14.111Z [error]: Delayed summary update failed {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
