@@ -12,7 +12,7 @@ import helmet from "helmet";
 import logger from "./config/logger.js";
 import { errorHandler } from "./utils/error-handler.js";
 import { connectDB } from "./config/db.js";
-import { simpleAgent } from "./controllers/agent.js";
+import { createAnalysisController } from "./controllers/analysis.controller.js";
 
 const app = express();
 app.use(
@@ -21,7 +21,7 @@ app.use(
   }),
 );
 app.use(helmet());
-app.use(express.json())
+app.use(express.json());
 
 const server = createServer(app);
 
@@ -32,16 +32,20 @@ const io = new Server(server, {
   },
 });
 
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.http(`${req.method} ${req.url}`);
   next();
 });
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   return res.json({
     message: "Hello world!",
   });
 });
+
+// After creating `io`:
+const analyzeHandler = createAnalysisController(io);
+app.post("/api/analyze", analyzeHandler);
 
 
 //just for testing
@@ -72,8 +76,6 @@ app.get("/photos", async (req: Request, res: Response) => {
     });
   }
 });
-
-app.post("/agent", simpleAgent)
 
 io.on("connection", (socket) => {
   socket.on("message", (message: string) => {
