@@ -12,6 +12,13 @@ import type {
     ChatCompletion,
     ChatCompletionCreateParamsNonStreaming,
 } from "groq-sdk/resources/chat/completions.mjs";
+import { tavily as createTavily } from "@tavily/core";
+import type {
+    TavilyClient,
+    TavilySearchOptions,
+    TavilySearchResponse,
+} from "@tavily/core";
+import { truncateQuery } from "../utils/trim-query.js";
 dotenv.config();
 
 interface Config {
@@ -23,13 +30,16 @@ interface Config {
 const mongoDBURI = process.env.MONGODB_URI;
 const geminiApiKeys = getApiKeys("GEMINI_API_KEYS");
 const groqApiKeys = getApiKeys("GROQ_API_KEYS");
+const tavilyApiKeys = getApiKeys("TAVILY_API_KEYS");
 
 if (!mongoDBURI) throw new Error("ENV NOT FOUND!");
 
 const geminiClients = geminiApiKeys.map((apiKey) => new GoogleGenAI({ apiKey }));
 const groqClients = groqApiKeys.map((apiKey) => new Groq({ apiKey }));
+const tavilyClients = tavilyApiKeys.map((apiKey) => createTavily({ apiKey }));
 const geminiRotation = { currentIndex: 0 };
 const groqRotation = { currentIndex: 0 };
+const tavilyRotation = { currentIndex: 0 };
 
 type GroqCreateOptions = Parameters<Groq["chat"]["completions"]["create"]>[1];
 
@@ -85,6 +95,8 @@ function isQuotaOrRateLimitError(error: unknown): boolean {
         errorText.includes("resource_exhausted") ||
         errorText.includes("rate_limit") ||
         errorText.includes("rate limit") ||
+        errorText.includes("too many requests") ||
+        errorText.includes("limit exceeded") ||
         errorText.includes("quota")
     );
 }
@@ -130,6 +142,15 @@ export const groq = {
                 ),
         },
     },
+};
+
+export const tavily = {
+    search: (query: string, options?: TavilySearchOptions): Promise<TavilySearchResponse> =>
+        runWithKeyRotation<TavilyClient, TavilySearchResponse>(
+            tavilyClients,
+            tavilyRotation,
+            (client) => client.search(truncateQuery(query), options)
+        ),
 };
 export const redis = Redis.fromEnv();
 

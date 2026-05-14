@@ -13,6 +13,10 @@ import {
   saveHistory,
   trimHistory,
 } from "../utils/conversation-history.js";
+import {
+  ResearcherAgent,
+  type ResearcherOutput,
+} from "../agents/researcher.agent.js";
 
 // ─── Synthesis prompt ──────────────────────────────────────────────────────────
 const SYNTHESIS_SYSTEM = `You are the Synthesis Engine for PRISM, a multi-agent intelligence platform.
@@ -34,7 +38,11 @@ export class OrchestratorService {
     this.io = io;
 
     // ← Adding a new agent to PRISM = add one line here
-    this.agents = [new DevilsAdvocateAgent(), new EconomistAgent()];
+    this.agents = [
+      new ResearcherAgent(), // ← runs first in Round 1
+      new DevilsAdvocateAgent(),
+      new EconomistAgent(),
+    ];
   }
 
   async run(
@@ -95,6 +103,16 @@ export class OrchestratorService {
       otherAgentOutputs: [],
       ...(socketId && { socketId }),
     });
+
+    // Extract and emit research sources separately
+    const researcherOutput = round1Results.find(
+      (o) => o.agentName === "Researcher",
+    ) as ResearcherOutput | undefined;
+    if (researcherOutput?.sources?.length) {
+      this.emit(socketId, "research:sources", {
+        sources: researcherOutput.sources,
+      });
+    }
 
     this.emit(socketId, "round:complete", { round: 1, results: round1Results });
 
