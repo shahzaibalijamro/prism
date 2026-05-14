@@ -1,0 +1,68 @@
+2026-05-14T19:09:10.676Z [http]: POST /api/analyze
+2026-05-14T19:09:10.711Z [info]: Orchestrator starting
+2026-05-14T19:09:13.133Z [debug]: [Devil's Advocate] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:13.134Z [debug]: [Devil's Advocate] Round 1 — sending 2 messages to LLM
+2026-05-14T19:09:13.254Z [debug]: [Economist] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:13.256Z [debug]: [Economist] Round 1 — sending 2 messages to LLM
+2026-05-14T19:09:16.402Z [info]: [Devil's Advocate] Round 1 complete
+2026-05-14T19:09:18.210Z [info]: [Economist] Round 1 complete
+2026-05-14T19:09:19.124Z [debug]: [Researcher] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:19.128Z [debug]: [Researcher] Round 1 — sending 3 messages to LLM
+2026-05-14T19:09:23.408Z [info]: [Researcher] Round 1 complete
+2026-05-14T19:09:23.798Z [debug]: [Devil's Advocate] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:23.798Z [debug]: [Devil's Advocate] Round 2 — sending 6 messages to LLM
+2026-05-14T19:09:23.802Z [debug]: [Economist] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:23.802Z [debug]: [Economist] Round 2 — sending 6 messages to LLM
+2026-05-14T19:09:26.833Z [info]: [Devil's Advocate] Round 2 complete
+2026-05-14T19:09:29.860Z [debug]: [Researcher] Context: EXPIRED — using summary + semantic
+2026-05-14T19:09:29.861Z [debug]: [Researcher] Round 2 — sending 9 messages to LLM
+2026-05-14T19:09:30.497Z [info]: [Economist] Round 2 complete
+2026-05-14T19:10:10.795Z [info]: [Researcher] Round 2 complete
+2026-05-14T19:10:14.941Z [info]: Orchestrator complete
+2026-05-14T19:10:17.229Z [debug]: Full Gemini response, {
+  "sdkHttpResponse": {
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "content-encoding": "gzip",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Thu, 14 May 2026 19:10:19 GMT",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=2143",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-gemini-service-tier": "standard",
+      "x-xss-protection": "0"
+    }
+  },
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "The user, a 28-year-old software engineer in Boise earning $130K remotely with $60K in savings and no debt, is considering an AI startup offer in San Francisco for $180K, plus equity, requiring relocation and 4 days in-office. The Devil's Advocate highlights the core tension between career growth and financial upside versus increased cost of living, reduced stability, and potential decline in quality of life. All agents agree that San Francisco's exorbitant cost of living, particularly rent (potentially 3-4 times current, or 60-80% of income), would likely lead to lower effective take-home pay and savings despite the higher nominal salary. The inherent instability of startups, with over 70% failing within 10 years, makes the equity a high-risk proposition. The shift from remote to 4-day in-office work is also seen as a significant quality-of-life downgrade due to commutes and reduced flexibility. While the Researcher maintains a neutral stance, acknowledging potential professional growth, both the Devil's Advocate and the Economist strongly advise against the offer, emphasizing the quantifiable financial and lifestyle risks. The Devil's Advocate specifically warns of potential savings depletion and debt accumulation. Given the user's current stable, debt-free position, the San Francisco offer presents an unfavorable risk-reward profile, with guaranteed costs and significant lifestyle changes outweighing uncertain benefits. The Devil's Advocate recommends prioritizing current financial stability and quality of life over this offer."
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "GR4GaomzGpOOkdUPj-3LwA4",
+  "usageMetadata": {
+    "promptTokenCount": 808,
+    "candidatesTokenCount": 313,
+    "totalTokenCount": 1121,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 808
+      }
+    ],
+    "serviceTier": "standard"
+  }
+}
+2026-05-14T19:10:17.329Z [debug]: Newly generated summary : The user, a 28-year-old software engineer in Boise earning $130K remotely with $60K in savings and no debt, is considering an AI startup offer in San Francisco for $180K, plus equity, requiring relocation and 4 days in-office. The Devil's Advocate highlights the core tension between career growth and financial upside versus increased cost of living, reduced stability, and potential decline in quality of life. All agents agree that San Francisco's exorbitant cost of living, particularly rent (potentially 3-4 times current, or 60-80% of income), would likely lead to lower effective take-home pay and savings despite the higher nominal salary. The inherent instability of startups, with over 70% failing within 10 years, makes the equity a high-risk proposition. The shift from remote to 4-day in-office work is also seen as a significant quality-of-life downgrade due to commutes and reduced flexibility. While the Researcher maintains a neutral stance, acknowledging potential professional growth, both the Devil's Advocate and the Economist strongly advise against the offer, emphasizing the quantifiable financial and lifestyle risks. The Devil's Advocate specifically warns of potential savings depletion and debt accumulation. Given the user's current stable, debt-free position, the San Francisco offer presents an unfavorable risk-reward profile, with guaranteed costs and significant lifestyle changes outweighing uncertain benefits. The Devil's Advocate recommends prioritizing current financial stability and quality of life over this offer.
