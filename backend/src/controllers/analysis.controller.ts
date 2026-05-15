@@ -12,6 +12,8 @@ const analysisSchema = z.object({
   sessionId: z.string().uuid().optional(),
   // The frontend sends its socket.id here so the orchestrator knows where to stream
   socketId: z.string().optional(),
+  // Search mode: "off" skips ResearcherAgent, "basic"/"advanced" configures Tavily depth
+  searchMode: z.enum(["off", "basic", "advanced"]).default("off"),
 });
 
 // Factory: controller is created once with `io` injected
@@ -25,11 +27,11 @@ export function createAnalysisController(io: Server) {
       return sendError(res, 400, "Invalid input", parsed.error.message);
     }
 
-    const { query, sessionId: existingId, socketId } = parsed.data;
+    const { query, sessionId: existingId, socketId, searchMode } = parsed.data;
     const sessionId = existingId ?? uuidv4();
 
     try {
-      const result = await orchestrator.run(query, sessionId, socketId);
+      const result = await orchestrator.run(query, sessionId, socketId, searchMode);
       return sendSuccess(res, 200, { sessionId, ...result });
     } catch (error) {
       logger.error("Analysis failed", error);

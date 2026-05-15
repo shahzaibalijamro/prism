@@ -8,6 +8,7 @@ export type ResearchSource = {
   title: string;
   domain: string;
   url: string;
+  snippet: string;
 };
 
 export type ResearcherOutput = AgentOutput & {
@@ -29,10 +30,10 @@ If the search results don't cover something the other agents claim, note that ex
 
   // Override run() to inject live web results + store sources
   async run(ctx: AgentRunContext): Promise<ResearcherOutput> {
-    const { query } = ctx;
+    const { query, searchDepth } = ctx;
 
-    // Fetch live results and extract sources
-    const { webContext, sources } = await this.fetchWebResults(query);
+    // Fetch live results and extract sources, using the configured depth
+    const { webContext, sources } = await this.fetchWebResults(query, searchDepth ?? "basic");
 
     // Inject into the context so the base class pipeline sees it
     const enrichedCtx: AgentRunContext = {
@@ -47,10 +48,11 @@ If the search results don't cover something the other agents claim, note that ex
 
   private async fetchWebResults(
     query: string,
+    searchDepth: "basic" | "advanced",
   ): Promise<{ webContext: string; sources: ResearchSource[] }> {
     try {
       const response = await tavily.search(query, {
-        searchDepth: "basic",
+        searchDepth,
         maxResults: 5,
         includeAnswer: true,
       });
@@ -66,6 +68,7 @@ If the search results don't cover something the other agents claim, note that ex
         title: result.title,
         domain: new URL(result.url).hostname,
         url: result.url,
+        snippet: result.content ?? "",
       }));
 
       const lines: string[] = [];

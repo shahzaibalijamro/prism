@@ -27,7 +27,8 @@ export interface AgentRunContext {
   round: 1 | 2;
   queryEmbedding: number[];
   otherAgentOutputs?: AgentOutput[];
-  researchContext?: string; // ← add this
+  researchContext?: string;
+  searchDepth?: "basic" | "advanced"; // ← used by ResearcherAgent only
 }
 
 const COMPRESSION_THRESHOLD = 10; // message count, not pairs

@@ -4,7 +4,7 @@ import { createEmbeddings } from "../utils/embeddings.js";
 import { storeMessage } from "./message.service.js";
 import { updateConversationSummary } from "./conversation.service.js";
 import { SessionModel } from "../models/session.model.js";
-import { DevilsAdvocateAgent, EconomistAgent } from "../agents/index.js";
+import { DevilsAdvocateAgent, EconomistAgent, VisionaryAgent, ConsumerPsychologistAgent, OperationsPragmatistAgent } from "../agents/index.js";
 import type { BaseAgent, AgentOutput } from "../agents/base.agent.js";
 import { genAI } from "../config/config.js";
 import logger from "../config/logger.js";
@@ -42,6 +42,9 @@ export class OrchestratorService {
       new ResearcherAgent(), // ← runs first in Round 1
       new DevilsAdvocateAgent(),
       new EconomistAgent(),
+      new VisionaryAgent(),
+      new ConsumerPsychologistAgent(),
+      new OperationsPragmatistAgent(),
     ];
   }
 
@@ -49,14 +52,25 @@ export class OrchestratorService {
     query: string,
     sessionId: string,
     socketId?: string,
+    searchMode?: "off" | "basic" | "advanced",
   ): Promise<{
     round1: AgentOutput[];
     round2: AgentOutput[];
     synthesis: string;
   }> {
+    // ── Determine active agents based on searchMode ────────────────────────
+    // "off" → skip ResearcherAgent entirely; "basic"/"advanced" → include it
+    const searchDepth: "basic" | "advanced" =
+      searchMode === "advanced" ? "advanced" : "basic";
+    const activeAgents =
+      searchMode === "off"
+        ? this.agents.filter((a) => a.name !== "Researcher")
+        : this.agents;
+
     logger.info("Orchestrator starting", {
       sessionId,
-      agentCount: this.agents.length,
+      agentCount: activeAgents.length,
+      searchMode: searchMode ?? "basic",
     });
 
     // ── 0. Create embeddings once — shared across all agents ────────────────
@@ -87,7 +101,7 @@ export class OrchestratorService {
 
     this.emit(socketId, "session:start", {
       sessionId,
-      agents: this.agents.map((a) => a.name),
+      agents: activeAgents.map((a) => a.name),
     });
 
     // ── Round 1: all agents analyze independently, in parallel ───────────────
@@ -101,6 +115,8 @@ export class OrchestratorService {
       sessionId,
       queryEmbedding,
       otherAgentOutputs: [],
+      agents: activeAgents,
+      searchDepth,
       ...(socketId && { socketId }),
     });
 
@@ -127,6 +143,8 @@ export class OrchestratorService {
       sessionId,
       queryEmbedding,
       otherAgentOutputs: round1Results,
+      agents: activeAgents,
+      searchDepth,
       ...(socketId && { socketId }),
     });
 
@@ -179,6 +197,8 @@ export class OrchestratorService {
     sessionId,
     queryEmbedding,
     otherAgentOutputs,
+    agents,
+    searchDepth,
     socketId,
   }: {
     round: 1 | 2;
@@ -186,10 +206,12 @@ export class OrchestratorService {
     sessionId: string;
     queryEmbedding: number[];
     otherAgentOutputs: AgentOutput[];
+    agents: BaseAgent[];
+    searchDepth: "basic" | "advanced";
     socketId?: string;
   }): Promise<AgentOutput[]> {
     const results = await Promise.all(
-      this.agents.map(async (agent) => {
+      agents.map(async (agent) => {
         try {
           const output = await agent.run({
             sessionId,
@@ -197,6 +219,7 @@ export class OrchestratorService {
             round,
             queryEmbedding,
             otherAgentOutputs,
+            searchDepth,
           });
 
           // Emit each agent's completion as it finishes
