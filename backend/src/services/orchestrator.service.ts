@@ -2,8 +2,9 @@
 import type { Server } from "socket.io";
 import { createEmbeddings } from "../utils/embeddings.js";
 import { storeMessage } from "./message.service.js";
-import { updateConversationSummary } from "./conversation.service.js";
+import { updateConversationSummary, updateConversationTitle } from "./conversation.service.js";
 import { SessionModel } from "../models/session.model.js";
+import { ConversationModel } from "../models/conversation.model.js";
 import { DevilsAdvocateAgent, EconomistAgent, VisionaryAgent, ConsumerPsychologistAgent, OperationsPragmatistAgent } from "../agents/index.js";
 import type { BaseAgent, AgentOutput } from "../agents/base.agent.js";
 import { genAI } from "../config/config.js";
@@ -53,6 +54,7 @@ export class OrchestratorService {
     sessionId: string,
     socketId?: string,
     searchMode?: "off" | "basic" | "advanced",
+    userId?: string,
   ): Promise<{
     round1: AgentOutput[];
     round2: AgentOutput[];
@@ -82,7 +84,7 @@ export class OrchestratorService {
     // ── 0b. Persist the user message once ───────────────────────────────────
     // Each agent should NOT store the user message — only the orchestrator does.
     // Otherwise you'd get N duplicate user messages in MongoDB.
-    await storeMessage(sessionId, "user", query, queryEmbedding);
+    await storeMessage(sessionId, "user", query, queryEmbedding, userId);
     const { messages: recentHistory } = await getHistory(sessionId);
 
     // ── 0c. Create session record ────────────────────────────────────────────
@@ -94,10 +96,31 @@ export class OrchestratorService {
         round1: [],
         round2: [],
         synthesis: "",
+        researchSources: [],
         status: "running",
+        ...(userId ? { userId } : {}),
       },
       { upsert: true },
     );
+
+    // ── 0d. Create conversation record early (truncated-prompt title as fallback) ──
+    // This ensures the document exists in MongoDB before the frontend fetches chats.
+    // The Groq-generated title overwrites this immediately below.
+    const fallbackTitle = query.replace(/\s+/g, " ").trim().slice(0, 54) || "Untitled";
+    await ConversationModel.updateOne(
+      { conversationId: sessionId },
+      {
+        $setOnInsert: { title: fallbackTitle, ...(userId ? { userId } : {}) },
+        $set: { updatedAt: new Date() },
+      },
+      { upsert: true },
+    );
+
+    // ── 0e. Generate chat title via Groq BEFORE Round 1 ──────────────────────────
+    // Title is the first thing the user sees updated — generate it early, not at the end.
+    // This runs in ~1s with llama-3.1-8b-instant and emits to the frontend immediately.
+    const generatedTitle = await updateConversationTitle(sessionId, query);
+    this.emit(socketId, "title:update", { title: generatedTitle, sessionId });
 
     this.emit(socketId, "session:start", {
       sessionId,
@@ -166,15 +189,17 @@ export class OrchestratorService {
         round1: round1Results,
         round2: round2Results,
         synthesis,
+        researchSources: researcherOutput?.sources ?? [],
         status: "complete",
       },
     );
 
     // ── Update conversation summary (fire and forget) ─────────────────────────
     // Pass the synthesis as the "assistant message" for the summary
-    updateConversationSummary(sessionId, query, synthesis).catch((err) =>
+    updateConversationSummary(sessionId, query, synthesis, userId).catch((err) =>
       logger.error("Summary update failed", err),
     );
+
 
     saveHistory(
       sessionId,

@@ -8,6 +8,12 @@ const messageSchema = new Schema(
       index: true,
     },
 
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+
     role: {
       type: String,
       enum: ["user", "assistant", "system"],

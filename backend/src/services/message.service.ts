@@ -5,9 +5,11 @@ export async function storeMessage(
   role: Message["role"],
   content: string,
   embedding: number[],
+  userId?: string,
 ): Promise<void> {
   await MessageModel.create({
     conversationId,
+    ...(userId ? { userId } : {}),
     role,
     content,
     embedding,

@@ -19,15 +19,26 @@ import type {
     TavilySearchResponse,
 } from "@tavily/core";
 import { truncateQuery } from "../utils/trim-query.js";
+import jwt from "jsonwebtoken";
 dotenv.config();
 
 interface Config {
     port: number,
     NODE_ENV: string,
-    mongoDBURI: string
+    mongoDBURI: string,
+    googleClientId: string,
+    googleClientSecret: string,
+    jwtSecret: string,
+    jwtExpiresIn: jwt.SignOptions['expiresIn'];
+    jwtCookieMaxAge: number,
 }
 
 const mongoDBURI = process.env.MONGODB_URI;
+const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "dummy_google_client_id";
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "dummy_google_client_secret";
+const jwtSecret = process.env.JWT_SECRET ?? "dummy_jwt_secret_change_me";
+const jwtExpiresIn = (process.env.JWT_EXPIRES_IN ?? "7d") as jwt.SignOptions['expiresIn'];
+const jwtCookieMaxAge = Number(process.env.JWT_COOKIE_MAX_AGE) ?? 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 const geminiApiKeys = getApiKeys("GEMINI_API_KEYS");
 const groqApiKeys = getApiKeys("GROQ_API_KEYS");
 const tavilyApiKeys = getApiKeys("TAVILY_API_KEYS");
@@ -157,7 +168,12 @@ export const redis = Redis.fromEnv();
 const config: Config = {
     port: Number(process.env.PORT) || 3000,
     NODE_ENV: process.env.NODE_ENV || "development",
-    mongoDBURI: mongoDBURI
+    mongoDBURI: mongoDBURI,
+    googleClientId,
+    googleClientSecret,
+    jwtSecret,
+    jwtExpiresIn,
+    jwtCookieMaxAge,
 }
 
 export default config;

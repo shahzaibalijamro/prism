@@ -1,6 +1,7 @@
 // src/controllers/analysis.controller.ts
 import z from "zod";
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { v4 as uuidv4 } from "uuid";
 import { sendError, sendSuccess } from "../utils/response-handler.js";
 import { OrchestratorService } from "../services/orchestrator.service.js";
@@ -22,6 +23,9 @@ export function createAnalysisController(io: Server) {
   const orchestrator = new OrchestratorService(io);
 
   return async (req: Request, res: Response) => {
+    // userId is set by authMiddleware
+    const userId = (req as unknown as AuthenticatedRequest).userId;
+
     const parsed = analysisSchema.safeParse(req.body);
     if (!parsed.success) {
       return sendError(res, 400, "Invalid input", parsed.error.message);
@@ -31,7 +35,8 @@ export function createAnalysisController(io: Server) {
     const sessionId = existingId ?? uuidv4();
 
     try {
-      const result = await orchestrator.run(query, sessionId, socketId, searchMode);
+      // Pass userId to orchestrator so it can associate conversation/session with the user
+      const result = await orchestrator.run(query, sessionId, socketId, searchMode, userId);
       return sendSuccess(res, 200, { sessionId, ...result });
     } catch (error) {
       logger.error("Analysis failed", error);

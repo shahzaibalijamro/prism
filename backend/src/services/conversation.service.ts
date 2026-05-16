@@ -1,16 +1,71 @@
-import { genAI } from "../config/config.js";
+import { genAI, groq } from "../config/config.js";
 import logger from "../config/logger.js";
 import { ConversationModel } from "../models/conversation.model.js";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// ─── Generate a short chat title from the first user prompt using Groq ────────
+async function generateChatTitle(userMsg: string): Promise<string> {
+  try {
+    const response = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a chat title generator. Given a user's first message in a conversation, generate a very short, concise title (maximum 6 words) that captures the core topic or question. Do not use quotes. Do not add prefixes like 'Title:'. Just output the title directly as a single line.",
+        },
+        {
+          role: "user",
+          content: userMsg,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 30,
+    });
+
+    const title = response.choices[0]?.message?.content?.trim() || "";
+    // Fallback to truncation if Groq returns empty
+    return title || userMsg.replace(/\s+/g, " ").trim().slice(0, 54) || "Untitled";
+  } catch (error) {
+    logger.warn("Failed to generate chat title via Groq, falling back to truncation", error);
+    return userMsg.replace(/\s+/g, " ").trim().slice(0, 54) || "Untitled";
+  }
+}
+
+// ─── Update the conversation title with a Groq-generated one ──
+// Returns the generated title so the orchestrator can emit it via socket immediately.
+async function updateConversationTitle(
+  conversationId: string,
+  userMsg: string,
+): Promise<string> {
+  try {
+    const generatedTitle = await generateChatTitle(userMsg);
+    await ConversationModel.updateOne(
+      { conversationId },
+      { $set: { title: generatedTitle, updatedAt: new Date() } },
+    );
+    logger.info(`Updated conversation title to: ${generatedTitle}`);
+    return generatedTitle;
+  } catch (error) {
+    logger.warn("Failed to update conversation title", error);
+    // Return the fallback truncated title so the frontend still gets an update
+    return userMsg.replace(/\s+/g, " ").trim().slice(0, 54) || "Untitled";
+  }
+}
+
 async function updateConversationSummary(
   conversationId: string,
   userMsg: string,
   assistantMsg: string,
+  userId?: string,
 ): Promise<string> {
   const conversation = await ConversationModel.findOne({ conversationId });
   const previousSummary = conversation?.summary || "(none)";
+
+  // Derive a short title from the user message (only set on first insert)
+  // This serves as an immediate fallback; the Groq-generated title overwrites it later.
+  const title = userMsg.replace(/\s+/g, " ").trim().slice(0, 54) || "Untitled";
 
   const prompt = `
 Current summary:
@@ -69,7 +124,10 @@ Rules:
 
       await ConversationModel.updateOne(
         { conversationId },
-        { summary: newSummary, updatedAt: new Date() },
+        {
+          $set: { summary: newSummary, updatedAt: new Date(), ...(userId ? { userId } : {}) },
+          $setOnInsert: { title },
+        },
         { upsert: true },
       );
 
@@ -97,4 +155,4 @@ Rules:
   throw lastError;
 }
 
-export { updateConversationSummary };
+export { updateConversationSummary, updateConversationTitle };

@@ -10,3 +10,4 @@
 2026-05-11T15:37:00.870Z [error]: Delayed summary update failed {"error":{"code":503,"message":"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.","status":"UNAVAILABLE"}}
 2026-05-11T16:20:22.008Z [error]: Expected double-quoted property name in JSON at position 149
 2026-05-11T18:26:00.745Z [error]: {"error":{"code":503,"message":"The service is currently unavailable.","status":"UNAVAILABLE"}}
+2026-05-16T18:06:29.973Z [error]: Google Sign-In failed Wrong recipient, payload audience != requiredAudience
