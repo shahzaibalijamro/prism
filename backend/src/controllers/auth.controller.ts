@@ -62,10 +62,13 @@ export async function googleSignIn(req: Request, res: Response) {
     );
 
     // Set HttpOnly cookie
+    // sameSite: "none" + secure: true is required because the frontend (Vercel)
+    // and backend (Render) are on different origins. Socket.IO connects directly
+    // to the backend and needs the cookie to be sent cross-origin.
     res.cookie("token", token, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
       maxAge: config.jwtCookieMaxAge, // milliseconds
       path: "/",
     });
@@ -80,6 +83,11 @@ export async function googleSignIn(req: Request, res: Response) {
           name: user.name,
           avatarUrl: user.avatarUrl,
         },
+        // Include the token in the response body so the frontend can
+        // pass it to Socket.IO via auth handshake (the cookie is scoped
+        // to the Vercel domain, so Socket.IO connecting directly to Render
+        // won't receive it).
+        token,
       },
       "Signed in successfully",
     );
@@ -92,12 +100,24 @@ export async function googleSignIn(req: Request, res: Response) {
 // ─── Get current user profile ────────────────────────────────────────────────
 export async function getProfile(req: Request, res: Response) {
   try {
-    const user = await UserModel.findById(
-      (req as unknown as AuthenticatedRequest).userId,
-    );
+    const authReq = req as unknown as AuthenticatedRequest;
+    const user = await UserModel.findById(authReq.userId);
     if (!user) {
       return sendError(res, 404, "User not found");
     }
+
+    // Re-issue a JWT so the frontend can pass it to Socket.IO for cross-origin
+    // auth (Socket.IO connects directly to the backend, where the HttpOnly
+    // cookie scoped to the Vercel domain won't be sent).
+    const freshToken = jwt.sign(
+      { userId: user._id.toString(), tokenVersion: user.tokenVersion },
+      config.jwtSecret,
+      {
+        ...(config.jwtExpiresIn !== undefined && {
+          expiresIn: config.jwtExpiresIn,
+        }),
+      },
+    );
 
     return sendSuccess(res, 200, {
       user: {
@@ -106,6 +126,7 @@ export async function getProfile(req: Request, res: Response) {
         name: user.name,
         avatarUrl: user.avatarUrl,
       },
+      token: freshToken,
     });
   } catch (error) {
     logger.error("Failed to fetch profile", error);

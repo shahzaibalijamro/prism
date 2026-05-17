@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { socket } from "./socket";
+import { socket, setSocketToken } from "./socket";
 import { useAuth } from "./auth-context";
 import { ThemeToggle } from "./theme-toggle";
 import { SignInPage } from "./signin";
@@ -132,9 +132,10 @@ type BackendSession = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "https://prism-t1ko.onrender.com";
+// REST API calls use relative URLs so they flow through the Vercel proxy
+// (next.config.ts rewrites /api/* to the backend). This ensures the HttpOnly
+// auth cookie (scoped to the Vercel domain) is always sent with requests.
+const API_BASE_URL = "";
 
 const agents: PrismAgent[] = [
   {
@@ -448,7 +449,16 @@ function AuthLoadingScreen() {
 // ─── Home component ───────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, accessToken, signOut } = useAuth();
+
+  // ── Wire Socket.IO JWT token from auth context ──────────────────────────
+  // When the user signs in, the backend returns the JWT in the response body.
+  // We pass it to socket.ts so it can authenticate with the backend directly
+  // (the HttpOnly cookie is scoped to the Vercel domain and won't be sent
+  // cross-origin to the Render backend).
+  useEffect(() => {
+    setSocketToken(accessToken);
+  }, [accessToken]);
 
   // ── Chat state (replaces localStorage workspace) ──────────────────────────
   const [threads, setThreads] = useState<ThreadRecord[]>([]);

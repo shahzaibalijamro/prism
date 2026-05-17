@@ -99,22 +99,25 @@ app.get("/photos", async (req: Request, res: Response) => {
 // Rejects connections that aren't authenticated or have a token version mismatch.
 io.use(async (socket, next) => {
   try {
-    const cookieHeader = socket.handshake.headers.cookie;
-    if (!cookieHeader) {
-      return next(new Error("Authentication required"));
+    // Try to get the token from the auth handshake first (sent by frontend
+    // because the HttpOnly cookie is scoped to the Vercel domain and won't
+    // be sent cross-origin). Fall back to parsing the cookie header.
+    let token: string | undefined =
+      (socket.handshake.auth as { token?: string }).token;
+
+    if (!token) {
+      const cookieHeader = socket.handshake.headers.cookie;
+      if (cookieHeader) {
+        const tokenCookie = cookieHeader
+          .split(";")
+          .map((c) => c.trim())
+          .find((c) => c.startsWith("token="));
+        if (tokenCookie) {
+          token = tokenCookie.split("=")[1];
+        }
+      }
     }
 
-    // Parse cookies to find the JWT token
-    const tokenCookie = cookieHeader
-      .split(";")
-      .map((c) => c.trim())
-      .find((c) => c.startsWith("token="));
-
-    if (!tokenCookie) {
-      return next(new Error("Authentication required"));
-    }
-
-    const token = tokenCookie.split("=")[1];
     if (!token) {
       return next(new Error("Authentication required"));
     }
