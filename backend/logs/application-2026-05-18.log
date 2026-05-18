@@ -1,0 +1,29 @@
+2026-05-18T14:07:01.656Z [http]: GET /api/auth/profile
+2026-05-18T14:07:02.254Z [http]: GET /api/chats
+2026-05-18T14:19:35.502Z [http]: GET /api/chats
+2026-05-18T14:23:38.153Z [http]: GET /api/chats/7b1c6f6b-7c9c-42d0-8eb2-813fefa6251a
+2026-05-18T14:23:44.191Z [http]: DELETE /api/chats/7b1c6f6b-7c9c-42d0-8eb2-813fefa6251a
+2026-05-18T14:23:45.873Z [http]: GET /api/chats
+2026-05-18T14:24:08.231Z [http]: POST /api/analyze
+2026-05-18T14:24:08.379Z [info]: Orchestrator starting
+2026-05-18T14:24:11.040Z [info]: Updated conversation title to: Should I Leave Marketing for AI YouTube
+2026-05-18T14:24:11.513Z [debug]: [Devil's Advocate] Context: EXPIRED — using summary + semantic
+2026-05-18T14:24:11.514Z [debug]: [Devil's Advocate] Round 1 — sending 3 messages to LLM
+2026-05-18T14:24:11.661Z [debug]: [Visionary] Context: EXPIRED — using summary + semantic
+2026-05-18T14:24:11.664Z [debug]: [Visionary] Round 1 — sending 3 messages to LLM
+2026-05-18T14:24:11.702Z [debug]: [Economist] Context: EXPIRED — using summary + semantic
+2026-05-18T14:24:11.704Z [debug]: [Economist] Round 1 — sending 3 messages to LLM
+2026-05-18T14:25:54.516Z [http]: GET /api/chats
+2026-05-18T14:40:24.982Z [http]: GET /api/chats
+2026-05-18T14:40:40.351Z [http]: GET /api/chats
+2026-05-18T15:04:54.136Z [http]: GET /api/auth/profile
+2026-05-18T15:04:55.817Z [http]: GET /api/chats
+2026-05-18T15:17:02.107Z [http]: GET /api/chats
+2026-05-18T15:54:17.185Z [http]: GET /api/chats
+2026-05-18T15:54:58.163Z [http]: GET /api/chats
+2026-05-18T18:31:59.799Z [http]: GET /api/auth/profile
+2026-05-18T18:32:00.580Z [http]: GET /api/chats
+2026-05-18T18:51:05.588Z [http]: GET /api/auth/profile
+2026-05-18T18:51:06.007Z [http]: GET /api/chats
+2026-05-18T18:54:36.514Z [http]: GET /api/auth/profile
+2026-05-18T18:54:38.208Z [http]: GET /api/chats

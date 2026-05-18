@@ -189,10 +189,26 @@ const agents: PrismAgent[] = [
 ];
 
 const promptStarters = [
-  "Pressure-test my plan to launch a premium AI note-taking app.",
-  "Find the weakest assumptions in my hiring plan.",
-  "Challenge this idea: a subscription service for solo founders.",
-  "What am I missing before I commit to this product direction?",
+  {
+    label: "Relocate to Singapore for a green hydrogen startup?",
+    prompt:
+      "I\u2019m a 36\u2011year\u2011old mechanical engineer in Stuttgart, Germany, earning \u20AC85K/year. I\u2019ve been offered a job in Singapore at a green hydrogen startup: SGD\u202f180K/year + equity, but I must relocate and work on\u2011site 5 days a week. I have \u20AC70K in savings, no debt, and I\u2019d need to break my current rental contract (\u20AC1,200/month). Should I take the offer? Please consider: the current green hydrogen policy landscape in Singapore vs. the EU, visa and work\u2011pass requirements for foreign professionals, cost of living comparison (Stuttgart vs. Singapore), the startup\u2019s funding and survival likelihood in the current cleantech investment climate, and the personal/cultural adjustment for a single European moving to Southeast Asia.",
+  },
+  {
+    label: "Bootstrap an AI-ESG SaaS or wait for CSRD clarity?",
+    prompt:
+      "I\u2019m a 34\u2011year\u2011old senior product manager in London earning \u00A390K/year. I want to leave my job and bootstrap a B2B SaaS platform that uses large language models to automate ESG (Environmental, Social, Governance) reporting for mid\u2011sized companies in the EU. I have \u00A360K in savings, no debt, and can access a \u00A3150K government innovation grant if I stay in the UK. Should I make the leap full\u2011time now, or wait until the EU\u2019s Corporate Sustainability Reporting Directive (CSRD) enforcement timeline is clearer? Consider the competitive landscape for AI\u2011ESG tools, recent changes to UK R&D tax credits, the state of SaaS funding in 2025, and real\u2011world adoption of LLMs in compliance workflows.",
+  },
+  {
+    label: "Move to San Francisco for an AI startup?",
+    prompt:
+      "I\u2019m a 28-year-old software engineer working remotely for a stable company in Boise, Idaho. I earn $130K/year, pay $1,200/month in rent, and have $60K in savings with no debt. I\u2019ve just been offered a job at an AI startup in San Francisco: $180K/year, equity, but I must relocate and work in-office 4 days a week. Should I take the offer? Please weigh current San Francisco cost of living, tech startup stability in 2025, remote vs. in-office trends, and quality-of-life trade-offs.",
+  },
+  {
+    label: "Quit to start a YouTube channel full-time?",
+    prompt:
+      "I\u2019m a 32-year-old marketing manager earning $110K/year. I want to leave my job to start a YouTube channel focused on AI tool reviews and tutorials. I have $40K in savings and no debt. Given the current state of YouTube monetisation, AI content saturation, and creator-economy trends, should I take the leap full-time, build it part-time while keeping my job, or abandon the idea?",
+  },
 ];
 
 // ─── Utility helpers ──────────────────────────────────────────────────────────
@@ -481,7 +497,7 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState<"off" | "basic" | "advanced">("off");
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [progressFeed, setProgressFeed] = useState<ProgressFeedEntry[]>([]);
-  const [tooltipInfo, setTooltipInfo] = useState<{ text: string; top: number; left: number } | null>(null);
+  const [tooltipInfo, setTooltipInfo] = useState<{ text: string; top: number; left: number; isMobile?: boolean } | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const activeRunRef = useRef<ActiveRun | null>(null);
   const searchModeRef = useRef<"off" | "basic" | "advanced">(searchMode);
@@ -949,6 +965,17 @@ export default function Home() {
     <main className="prism-shell">
       <aside className={`sidebar ${isSidebarOpen ? "is-open" : ""}`}>
         <div className="sidebar-brand">
+          <button
+            className="sidebar-close-button"
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M15 5L5 15" />
+              <path d="M5 5L15 15" />
+            </svg>
+          </button>
           <div className="prism-mark" aria-hidden="true">
             <span />
           </div>
@@ -958,14 +985,6 @@ export default function Home() {
           </div>
           <ThemeToggle />
         </div>
-
-        <button
-          className="new-chat-button"
-          type="button"
-          onClick={startNewThread}
-        >
-          New chat
-        </button>
 
         <section className="sidebar-section" aria-label="Agents">
           <div className="section-label">Agents</div>
@@ -1015,11 +1034,22 @@ export default function Home() {
                     type="button"
                     onMouseEnter={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
-                      setTooltipInfo({
-                        text: thread.title,
-                        top: rect.top + rect.height / 2,
-                        left: rect.right + 10,
-                      });
+                      const isMobile = window.innerWidth <= 860;
+                      if (isMobile) {
+                        setTooltipInfo({
+                          text: thread.title,
+                          top: rect.bottom + 8,
+                          left: rect.left + rect.width / 2,
+                          isMobile: true,
+                        });
+                      } else {
+                        setTooltipInfo({
+                          text: thread.title,
+                          top: rect.top + rect.height / 2,
+                          left: rect.right + 10,
+                          isMobile: false,
+                        });
+                      }
                     }}
                     onMouseLeave={() => setTooltipInfo(null)}
                   >
@@ -1057,6 +1087,14 @@ export default function Home() {
             )}
           </div>
         </section>
+
+        <button
+          className="new-chat-button"
+          type="button"
+          onClick={startNewThread}
+        >
+          New chat
+        </button>
 
         {/* ── User info + sign-out ────────────────────────────────────────── */}
         <div className="sidebar-footer">
@@ -1098,6 +1136,18 @@ export default function Home() {
         aria-label="PRISM perspective workspace"
       >
         <header className="workspace-header">
+          <button
+            className="menu-button"
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+              <rect y="2" width="18" height="2" rx="1" />
+              <rect y="8" width="18" height="2" rx="1" />
+              <rect y="14" width="18" height="2" rx="1" />
+            </svg>
+          </button>
           <div className="workspace-title">
             <p className="eyebrow">Multi-agent perspective engine</p>
             <h1>
@@ -1133,10 +1183,11 @@ export default function Home() {
                   <p className="eyebrow">PRISM Orchestrator</p>
                   <h2>One question. Many lenses. A visible debate.</h2>
                   <p>
-                    PRISM is being built as a multi-agent perspective engine.
-                    Today Devil's Advocate and Economist run through the
-                    orchestrator, then PRISM synthesizes the debate into one
-                    answer.
+                    Six agents — Devil&rsquo;s Advocate, Economist, Visionary,
+                    Consumer Psychologist, Operations Pragmatist, and Research
+                    Agent — each take a different lens on your question. They
+                    debate it across two rounds, then PRISM synthesizes
+                    everything into one answer.
                   </p>
                 </div>
 
@@ -1186,14 +1237,14 @@ export default function Home() {
                 </div>
 
                 <div className="starter-grid" aria-label="Prompt starters">
-                  {promptStarters.map((prompt) => (
+                  {promptStarters.map((starter) => (
                     <button
                       disabled={isSubmitting}
-                      key={prompt}
-                      onClick={() => void submitPrompt(prompt)}
+                      key={starter.label}
+                      onClick={() => void submitPrompt(starter.prompt)}
                       type="button"
                     >
-                      {prompt}
+                      {starter.label}
                     </button>
                   ))}
                 </div>
@@ -1443,14 +1494,15 @@ export default function Home() {
       </section>
       {tooltipInfo && (
         <div
-          className="sidebar-tooltip"
+          className={`sidebar-tooltip ${tooltipInfo.isMobile ? "is-mobile" : ""}`}
           style={{
             position: "fixed",
-            top: tooltipInfo.top,
-            left: tooltipInfo.left,
+            top: tooltipInfo.isMobile ? tooltipInfo.top : tooltipInfo.top,
+            left: tooltipInfo.isMobile ? tooltipInfo.left : tooltipInfo.left,
+            transform: tooltipInfo.isMobile ? "translateX(-50%)" : "translateY(-50%)",
           }}
         >
-          <div className="sidebar-tooltip-arrow" />
+          <div className={`sidebar-tooltip-arrow ${tooltipInfo.isMobile ? "is-mobile" : ""}`} />
           {tooltipInfo.text}
         </div>
       )}

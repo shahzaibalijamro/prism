@@ -400,7 +400,7 @@ button:disabled {
 .agent-option.is-active {
   background: var(--paper-strong);
   border-color: var(--line-strong);
-  transform: translateY(-1px);
+  transform: translateY(0px);
 }
 
 .agent-option:disabled {
@@ -596,9 +596,27 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--ink);
+  cursor: pointer;
   display: none;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
-  padding: 0 13px;
+  min-width: 40px;
+  padding: 8px;
+}
+
+.sidebar-close-button {
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 36px;
+  padding: 6px;
 }
 
 .workspace-title h1,
@@ -1868,13 +1886,16 @@ button:disabled {
   }
 
   .sidebar {
-    box-shadow: 24px 0 70px rgba(43, 54, 41, 0.16);
+    background: linear-gradient(160deg, #fffef8 0%, #f4f2ea 40%, #eef7f2 100%);
+    box-shadow: none;
+    height: 100svh;
     left: 0;
+    overflow-y: auto;
     position: fixed;
     top: 0;
     transform: translateX(-106%);
     transition: transform 220ms ease;
-    width: min(320px, 88vw);
+    width: 100vw;
     z-index: 5;
   }
 
@@ -1899,10 +1920,39 @@ button:disabled {
   }
 
   .menu-button {
-    display: block;
+    display: flex;
   }
 
-  .workspace-header {}
+  .sidebar-close-button {
+    display: flex;
+  }
+
+  .sidebar-brand {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .workspace-header {
+    gap: 10px;
+  }
+
+  .sidebar-tooltip.is-mobile {
+    max-width: 90vw;
+    animation: none;
+  }
+
+  .sidebar-tooltip-arrow.is-mobile {
+    top: -6px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--ink);
+  }
+
+  .agent-list {
+    max-height: none;
+  }
 
   .engine-status {
     display: none;
@@ -2554,7 +2604,8 @@ button:disabled {
 /* Dark mode overrides inside responsive media queries */
 @media (max-width: 860px) {
   .dark .sidebar {
-    box-shadow: 24px 0 70px rgba(0, 0, 0, 0.32);
+    background: linear-gradient(160deg, #1a1b16 0%, #1e2420 40%, #2a1f1a 100%);
+    box-shadow: none;
   }
 
   .dark .sidebar-scrim {

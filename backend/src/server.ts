@@ -25,7 +25,7 @@ const app = express();
 // CORS must be configured before other middleware so that preflight requests work
 app.use(
   cors({
-    origin: "https://prism-web-v1.vercel.app",
+    origin: process.env.FRONTEND_URL,
     credentials: true, // required for HttpOnly cookies to be sent/received
   }),
 );
@@ -38,7 +38,7 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://prism-web-v1.vercel.app",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"],
     credentials: true, // required when client sends cookies (withCredentials: true)
   },
